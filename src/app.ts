@@ -101,9 +101,11 @@ function drawScene(gl: WebGL2RenderingContext, info: Info, buffers: Buffers) {
   const zNear = 0.1;
   const zFar = 100;
 
-  const proj = mat4.create();
-  mat4.perspective(proj, fov, aspect, zNear, zFar);
-  mat4.translate(proj, proj, [0, 0, -6]);
+  const projectionMatrix = mat4.create();
+  mat4.perspective(projectionMatrix, fov, aspect, zNear, zFar);
+
+  const modelViewMatrix = mat4.create();
+  mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -6]);
 
   {
     const numComponents = 2;
@@ -124,4 +126,20 @@ function drawScene(gl: WebGL2RenderingContext, info: Info, buffers: Buffers) {
   }
 
   gl.useProgram(info.program);
+  gl.uniformMatrix4fv(
+    info.uniformLocations.projectionMatrix,
+    false,
+    projectionMatrix
+  );
+  gl.uniformMatrix4fv(
+    info.uniformLocations.modelViewMatrix,
+    false,
+    modelViewMatrix
+  );
+
+  {
+    const offset = 0;
+    const vertexCount = 4;
+    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+  }
 }

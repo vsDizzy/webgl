@@ -1,0 +1,14 @@
+{
+  "name": "wgl",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "tsc"
+  },
+  "dependencies": {
+    "gl-matrix": "^3.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.3"
+  }
+}
