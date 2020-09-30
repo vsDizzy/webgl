@@ -3,6 +3,7 @@
     "target": "ESNext",
     "moduleResolution": "node",
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true
   }
 }
