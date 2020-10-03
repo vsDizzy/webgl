@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "rootDir": "src",
-    "outDir": "dist",
-    "allowSyntheticDefaultImports": true
+    "outDir": "dist"
   }
 }

@@ -1,4 +1,8 @@
-import { mat4 } from 'gl-matrix';
+import { Builder } from './builder.js';
+import { load } from './load.js';
+import { getMatrixes } from './matrix.js';
+import { getBuffer } from './position.js';
+import { getTexture, getTextureBuffer } from './texture';
 
 const glCanvas = document.getElementById('glcanvas') as HTMLCanvasElement;
 const gl = glCanvas.getContext('webgl2');
@@ -6,106 +10,28 @@ if (!gl) {
   throw new Error('Could not create webgl context.');
 }
 
-const vsSrc = `
-attribute vec4 aVertexPosition;
+run().catch((e) => console.error(e));
 
-uniform mat4 uModelViewMatrix;
-uniform mat4 uProjectionMatrix;
+async function run() {
+  const [vs, fs] = await Promise.all([
+    load('data/vertex.glsl'),
+    load('data/frag.glsl'),
+  ]);
 
-void main() {
-  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-}
-`;
+  const builder = new Builder(gl);
+  builder.compile(gl.VERTEX_SHADER, vs);
+  builder.compile(gl.FRAGMENT_SHADER, fs);
+  const program = builder.link();
 
-const fsSrc = `
-void main() {
-  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-}
-`;
+  const aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+  const aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
 
-const prog = ininitShaderProgram(gl, vsSrc, fsSrc);
+  const uProjectionMatrix = gl.getUniformLocation(program, 'uProjectionMatrix');
+  const uModelViewMatrix = gl.getUniformLocation(program, 'uModelViewMatrix');
+  const uSampler = gl.getUniformLocation(program, 'uSampler');
 
-type Info = typeof info;
-
-const info = {
-  program: prog,
-  attribLocations: {
-    vertexPosition: gl.getAttribLocation(prog, 'aVertexPosition'),
-  },
-  uniformLocations: {
-    projectionMatrix: gl.getUniformLocation(prog, 'uProjectionMatrix'),
-    modelViewMatrix: gl.getUniformLocation(prog, 'uModelViewMatrix'),
-  },
-};
-
-const buffers = initBuffers(gl);
-drawScene(gl, info, buffers);
-
-function ininitShaderProgram(
-  gl: WebGL2RenderingContext,
-  vsSrc: string,
-  fsSrc: string
-) {
-  const vs = loadShader(gl, gl.VERTEX_SHADER, vsSrc);
-  const fs = loadShader(gl, gl.FRAGMENT_SHADER, fsSrc);
-
-  const prog = gl.createProgram();
-  gl.attachShader(prog, vs);
-  gl.attachShader(prog, fs);
-  gl.linkProgram(prog);
-
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    const log = gl.getProgramInfoLog(prog);
-    throw new Error(`Error linking shader program: ${log}`);
-  }
-
-  return prog;
-}
-
-function loadShader(gl: WebGL2RenderingContext, type: number, src: string) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(sh);
-    throw new Error(`Error compiling shader: ${log}`);
-  }
-
-  return sh;
-}
-
-type Buffers = ReturnType<typeof initBuffers>;
-
-function initBuffers(gl: WebGL2RenderingContext) {
-  const posBuf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-
-  const pos = [1, 1, -1, 1, 1, -1, -1, -1];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
-  return { position: posBuf };
-}
-
-function drawScene(gl: WebGL2RenderingContext, info: Info, buffers: Buffers) {
-  gl.clearColor(0, 0, 0, 1);
-  gl.clearDepth(1);
-  gl.enable(gl.DEPTH_TEST);
-  gl.depthFunc(gl.LEQUAL);
-
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  const fov = 45 * (Math.PI / 180);
-  const aspect =
-    (gl.canvas as HTMLCanvasElement).clientWidth /
-    (gl.canvas as HTMLCanvasElement).clientHeight;
-  const zNear = 0.1;
-  const zFar = 100;
-
-  const projectionMatrix = mat4.create();
-  mat4.perspective(projectionMatrix, fov, aspect, zNear, zFar);
-
-  const modelViewMatrix = mat4.create();
-  mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -6]);
+  init(gl);
+  const posBuffer = getBuffer(gl);
 
   {
     const numComponents = 2;
@@ -113,33 +39,41 @@ function drawScene(gl: WebGL2RenderingContext, info: Info, buffers: Buffers) {
     const normalize = false;
     const stride = 0;
     const offset = 0;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.vertexAttribPointer(
-      info.attribLocations.vertexPosition,
+      aVertexPosition,
       numComponents,
       type,
       normalize,
       stride,
       offset
     );
-    gl.enableVertexAttribArray(info.attribLocations.vertexPosition);
+    gl.enableVertexAttribArray(aVertexPosition);
   }
 
-  gl.useProgram(info.program);
-  gl.uniformMatrix4fv(
-    info.uniformLocations.projectionMatrix,
-    false,
-    projectionMatrix
-  );
-  gl.uniformMatrix4fv(
-    info.uniformLocations.modelViewMatrix,
-    false,
-    modelViewMatrix
-  );
+  gl.useProgram(program);
+
+  {
+    const { projectionMatrix, modelViewMatrix } = getMatrixes(
+      glCanvas.clientWidth / glCanvas.clientHeight
+    );
+
+    gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix);
+    gl.uniformMatrix4fv(uModelViewMatrix, false, modelViewMatrix);
+  }
 
   {
     const offset = 0;
     const vertexCount = 4;
     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
   }
+}
+
+function init(gl: WebGL2RenderingContext) {
+  gl.clearColor(0, 0, 0, 1);
+  gl.clearDepth(1);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
