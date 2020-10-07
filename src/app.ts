@@ -2,7 +2,7 @@ import { Builder } from './builder.js';
 import { load } from './load.js';
 import { getMatrixes } from './matrix.js';
 import { getBuffer } from './position.js';
-import { getTexture, getTextureBuffer } from './texture';
+import { getTexture, getTextureBuffer } from './texture.js';
 
 const glCanvas = document.getElementById('glcanvas') as HTMLCanvasElement;
 const gl = glCanvas.getContext('webgl2');
@@ -60,6 +60,20 @@ async function run() {
 
     gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix);
     gl.uniformMatrix4fv(uModelViewMatrix, false, modelViewMatrix);
+  }
+
+  {
+    const texBuffer = getTextureBuffer(gl);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+    gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(aTextureCoord);
+  }
+
+  {
+    const texture = getTexture(gl, 'data/sample.png');
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(uSampler, 0);
   }
 
   {
