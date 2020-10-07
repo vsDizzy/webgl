@@ -51,6 +51,11 @@ async function run() {
     gl.enableVertexAttribArray(aVertexPosition);
   }
 
+  {
+    gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(aTextureCoord);
+  }
+
   gl.useProgram(program);
 
   {
@@ -63,17 +68,15 @@ async function run() {
   }
 
   {
-    const texBuffer = getTextureBuffer(gl);
-    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-    gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aTextureCoord);
-  }
-
-  {
-    const texture = getTexture(gl, 'data/sample.png');
+    const texture = await getTexture(gl, 'data/sample.png');
 
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(uSampler, 0);
+  }
+
+  {
+    const texBuffer = getTextureBuffer(gl);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
   }
 
   {

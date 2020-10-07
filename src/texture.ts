@@ -1,20 +1,22 @@
 export function getTexture(gl: WebGL2RenderingContext, url: string) {
-  const img = new Image();
-  img.src = url;
-  const texture = gl.createTexture();
-  img.onload = () => {
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    const level = 0;
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      gl.RGBA,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      img
-    );
-  };
-  return texture;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = url;
+    const texture = gl.createTexture();
+    img.onload = () => {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      const level = 0;
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        img
+      );
+      resolve(texture);
+    };
+  });
 }
 
 export function getTextureBuffer(gl: WebGL2RenderingContext) {
