@@ -4,6 +4,8 @@ if (!gl) {
   throw new Error('Could not create webgl context.');
 }
 
+export const aspect = glCanvas.clientWidth / glCanvas.clientHeight;
+
 export function compileShader(type: number, src: string) {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, src);

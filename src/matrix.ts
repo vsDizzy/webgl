@@ -1,6 +1,7 @@
+import { aspect } from './context.js';
 import { mat4 } from 'gl-matrix';
 
-export function getMatrixes(aspect: number) {
+export function getMatrixes() {
   const fov = 45 * (Math.PI / 180);
   const zNear = 0.1;
   const zFar = 100;
