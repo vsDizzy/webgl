@@ -1,20 +1,17 @@
 import { mat4 } from 'gl-matrix';
-import { Builder } from './builder.js';
+import { compileProgram } from './compiler.js';
 import { gl } from './context.js';
-import { load } from './load.js';
 import { getTexture } from './texture.js';
 
 var cubeRotation = 0.0;
 
-main().catch((e) => console.error(e));
+run().catch((e) => console.error(e));
 
-//
-// Start here
-//
-async function main() {
-  // Initialize a shader program; this is where all the lighting
-  // for the vertices and so forth is established.
-  const shaderProgram = await getProgram();
+async function run() {
+  const shaderProgram = await compileProgram(
+    'data/vertex.glsl',
+    'data/fragment.glsl'
+  );
 
   // Collect all the info needed to use the shader program.
   // Look up which attributes our shader program is using
@@ -435,13 +432,4 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   // Update the rotation for the next draw
 
   cubeRotation += deltaTime;
-}
-
-async function getProgram() {
-  const builder = new Builder();
-  builder.compile(gl.VERTEX_SHADER, await load('data/vertex.glsl'));
-  builder.compile(gl.FRAGMENT_SHADER, await load('data/frag.glsl'));
-  const program = builder.link();
-  builder.dispose();
-  return program;
 }

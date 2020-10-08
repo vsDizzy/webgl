@@ -1,4 +1,4 @@
-export function getTexture(gl: WebGL2RenderingContext, url: string) {
+export function getTexture(gl: WebGLRenderingContext, url: string) {
   const image = new Image();
   image.src = url;
   const texture = gl.createTexture();
@@ -12,7 +12,7 @@ export function getTexture(gl: WebGL2RenderingContext, url: string) {
   return texture;
 }
 
-export function getTextureBuffer(gl: WebGL2RenderingContext) {
+export function getTextureBuffer(gl: WebGLRenderingContext) {
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   const coordinates = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
